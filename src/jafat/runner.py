@@ -6,8 +6,6 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Iterator
-from pathlib import Path
-from typing import Optional
 
 log = logging.getLogger(__name__)
 
@@ -43,9 +41,9 @@ def build_command(
     model: str,
     trust: bool,
     force: bool,
-    mode: Optional[str],
-    workspace: Optional[str],
-    worktree: Optional[str],
+    mode: str | None,
+    workspace: str | None,
+    worktree: str | None,
     partial: bool,
     raw: bool,
 ) -> list[str]:

@@ -1,9 +1,6 @@
 """Tests for jafat.config."""
 
 import tomllib
-from pathlib import Path
-
-import pytest
 
 from jafat import config
 
@@ -38,7 +35,7 @@ def test_write_default_creates_file(tmp_path, monkeypatch):
 
 def test_write_default_does_not_overwrite(tmp_path, monkeypatch):
     cfg_path = tmp_path / "config.toml"
-    cfg_path.write_text("[defaults]\nmodel = \"custom\"\n")
+    cfg_path.write_text('[defaults]\nmodel = "custom"\n')
     monkeypatch.setattr(config, "CONFIG_PATH", cfg_path)
     config.write_default()
     assert "custom" in cfg_path.read_text()

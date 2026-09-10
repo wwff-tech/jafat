@@ -2,8 +2,6 @@
 
 import json
 
-import pytest
-
 from jafat.runner import parse_ndjson
 
 

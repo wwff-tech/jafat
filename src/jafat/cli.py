@@ -14,7 +14,6 @@ Usage:
 import logging
 import subprocess
 import sys
-from typing import Optional
 
 import click
 from rich.console import Console
@@ -29,23 +28,41 @@ log = logging.getLogger(__name__)
 
 # ── Shared option factory ────────────────────────────────────────────────────
 
+
 def _agent_options(f):
     """Attach common agent flags to a Click command."""
     options = [
-        click.option("--model",     "-m", default=None, metavar="MODEL",
-                     help="Model override (default from config)"),
-        click.option("--verbose",   "-v", is_flag=True, default=None,
-                     help="Show tool calls inline"),
-        click.option("--trust/--no-trust", default=None,
-                     help="Trust workspace without prompting"),
-        click.option("--workspace", "-W", default=None, metavar="PATH",
-                     help="Workspace directory (defaults to cwd)"),
-        click.option("--worktree",  "-w", default=None, metavar="NAME",
-                     help="Isolated git worktree name"),
-        click.option("--raw",       is_flag=True, default=False,
-                     help="Pass through raw text output (no Rich rendering)"),
-        click.option("--no-partial", is_flag=True, default=False,
-                     help="Disable stream-partial-output (full messages only)"),
+        click.option(
+            "--model",
+            "-m",
+            default=None,
+            metavar="MODEL",
+            help="Model override (default from config)",
+        ),
+        click.option("--verbose", "-v", is_flag=True, default=None, help="Show tool calls inline"),
+        click.option("--trust/--no-trust", default=None, help="Trust workspace without prompting"),
+        click.option(
+            "--workspace",
+            "-W",
+            default=None,
+            metavar="PATH",
+            help="Workspace directory (defaults to cwd)",
+        ),
+        click.option(
+            "--worktree", "-w", default=None, metavar="NAME", help="Isolated git worktree name"
+        ),
+        click.option(
+            "--raw",
+            is_flag=True,
+            default=False,
+            help="Pass through raw text output (no Rich rendering)",
+        ),
+        click.option(
+            "--no-partial",
+            is_flag=True,
+            default=False,
+            help="Disable stream-partial-output (full messages only)",
+        ),
     ]
     for opt in reversed(options):
         f = opt(f)
@@ -58,6 +75,7 @@ def _resolve(key: str, override, cfg: dict):
 
 
 # ── Commands ─────────────────────────────────────────────────────────────────
+
 
 @click.group()
 @click.option("--debug", is_flag=True, hidden=True)
@@ -98,10 +116,15 @@ def ask(ctx, prompt: str, model, verbose, trust, workspace, worktree, raw, no_pa
 @main.command()
 @click.argument("prompt")
 @_agent_options
-@click.option("--force/--no-force", "-f/-F", default=None,
-              help="Allow file modifications (default from config)")
-@click.option("--mode", type=click.Choice(["plan", "ask"]), default=None,
-              help="Execution mode override")
+@click.option(
+    "--force/--no-force",
+    "-f/-F",
+    default=None,
+    help="Allow file modifications (default from config)",
+)
+@click.option(
+    "--mode", type=click.Choice(["plan", "ask"]), default=None, help="Execution mode override"
+)
 @click.pass_context
 def run(ctx, prompt: str, model, verbose, trust, workspace, worktree, raw, no_partial, force, mode):
     """Run the agent with full tool access, including file writes."""
@@ -136,9 +159,9 @@ def models(ctx):
         display.print_error(result.stderr.strip() or "agent returned non-zero")
         sys.exit(result.returncode)
 
-    lines = [l for l in result.stdout.splitlines() if l.strip()]
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
     # Skip the "Available models" header line if present
-    model_lines = [l for l in lines if not l.lower().startswith("available")]
+    model_lines = [line for line in lines if not line.lower().startswith("available")]
 
     table = Table(title="Available Models", show_header=True, header_style="bold")
     table.add_column("ID", style="cyan")
@@ -204,22 +227,23 @@ def config_init():
 
 # ── Internal runner ──────────────────────────────────────────────────────────
 
+
 def _run_agent(
     prompt: str,
     cfg: dict,
-    model: Optional[str],
-    verbose: Optional[bool],
-    trust: Optional[bool],
+    model: str | None,
+    verbose: bool | None,
+    trust: bool | None,
     force: bool,
-    mode: Optional[str],
-    workspace: Optional[str],
-    worktree: Optional[str],
+    mode: str | None,
+    workspace: str | None,
+    worktree: str | None,
     raw: bool,
     partial: bool,
 ) -> None:
-    resolved_model   = _resolve("model",   model,   cfg)
+    resolved_model = _resolve("model", model, cfg)
     resolved_verbose = _resolve("verbose", verbose, cfg)
-    resolved_trust   = _resolve("trust",   trust,   cfg)
+    resolved_trust = _resolve("trust", trust, cfg)
     resolved_partial = partial and _resolve("partial", None, cfg)
 
     cmd = runner.build_command(
