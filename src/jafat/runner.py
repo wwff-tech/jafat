@@ -6,8 +6,7 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Iterator
-from pathlib import Path
-from typing import Optional
+from typing import IO, Any
 
 log = logging.getLogger(__name__)
 
@@ -26,7 +25,7 @@ def find_agent() -> list[str]:
     sys.exit(1)
 
 
-def parse_ndjson(stream) -> Iterator[dict]:
+def parse_ndjson(stream: IO[str]) -> Iterator[dict[str, Any]]:
     """Yield parsed JSON objects from a newline-delimited stream. Skips bad lines."""
     for raw in stream:
         line = raw.strip()
@@ -43,9 +42,9 @@ def build_command(
     model: str,
     trust: bool,
     force: bool,
-    mode: Optional[str],
-    workspace: Optional[str],
-    worktree: Optional[str],
+    mode: str | None,
+    workspace: str | None,
+    worktree: str | None,
     partial: bool,
     raw: bool,
 ) -> list[str]:
@@ -79,7 +78,9 @@ def passthrough(cmd: list[str]) -> int:
     return result.returncode
 
 
-def stream_events(cmd: list[str]) -> tuple[subprocess.Popen, Iterator[dict]]:
+def stream_events(
+    cmd: list[str],
+) -> tuple["subprocess.Popen[str]", Iterator[dict[str, Any]]]:
     """
     Start the agent process and return (proc, event_iterator).
     Caller is responsible for proc.wait() after consuming events.
@@ -96,4 +97,6 @@ def stream_events(cmd: list[str]) -> tuple[subprocess.Popen, Iterator[dict]]:
         log.error("Binary not found: %s", e)
         sys.exit(1)
 
+    if proc.stdout is None:  # stdout=PIPE above guarantees a stream
+        raise RuntimeError("subprocess stdout pipe was not created")
     return proc, parse_ndjson(proc.stdout)
