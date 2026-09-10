@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 CONFIG_PATH = Path.home() / ".config" / "jafat" / "config.toml"
 
-DEFAULTS: dict = {
+DEFAULTS: dict[str, object] = {
     "model": "composer-2-fast",
     "trust": True,
     "verbose": False,
@@ -17,7 +17,7 @@ DEFAULTS: dict = {
 }
 
 
-def load() -> dict:
+def load() -> dict[str, object]:
     """Load config, merging file over defaults. Never raises."""
     cfg = DEFAULTS.copy()
     if not CONFIG_PATH.exists():

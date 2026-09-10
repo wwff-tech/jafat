@@ -14,6 +14,8 @@ Usage:
 import logging
 import subprocess
 import sys
+from collections.abc import Callable
+from typing import Any
 
 import click
 from rich.console import Console
@@ -29,7 +31,7 @@ log = logging.getLogger(__name__)
 # ── Shared option factory ────────────────────────────────────────────────────
 
 
-def _agent_options(f):
+def _agent_options(f: Callable[..., Any]) -> Callable[..., Any]:
     """Attach common agent flags to a Click command."""
     options = [
         click.option(
@@ -69,7 +71,7 @@ def _agent_options(f):
     return f
 
 
-def _resolve(key: str, override, cfg: dict):
+def _resolve(key: str, override: Any, cfg: dict[str, Any]) -> Any:
     """Return override if explicitly set, else fall back to cfg."""
     return override if override is not None else cfg.get(key)
 
@@ -80,7 +82,7 @@ def _resolve(key: str, override, cfg: dict):
 @click.group()
 @click.option("--debug", is_flag=True, hidden=True)
 @click.pass_context
-def main(ctx, debug: bool):
+def main(ctx: click.Context, debug: bool) -> None:
     """JAFAT - Just Another Fscking Agent Tool.
 
     A Rich CLI wrapper for Cursor Agent headless mode.
@@ -95,7 +97,17 @@ def main(ctx, debug: bool):
 @click.argument("prompt")
 @_agent_options
 @click.pass_context
-def ask(ctx, prompt: str, model, verbose, trust, workspace, worktree, raw, no_partial):
+def ask(
+    ctx: click.Context,
+    prompt: str,
+    model: str | None,
+    verbose: bool | None,
+    trust: bool | None,
+    workspace: str | None,
+    worktree: str | None,
+    raw: bool,
+    no_partial: bool,
+) -> None:
     """Ask a question without modifying any files (read-only mode)."""
     cfg = ctx.obj["cfg"]
     _run_agent(
@@ -126,7 +138,19 @@ def ask(ctx, prompt: str, model, verbose, trust, workspace, worktree, raw, no_pa
     "--mode", type=click.Choice(["plan", "ask"]), default=None, help="Execution mode override"
 )
 @click.pass_context
-def run(ctx, prompt: str, model, verbose, trust, workspace, worktree, raw, no_partial, force, mode):
+def run(
+    ctx: click.Context,
+    prompt: str,
+    model: str | None,
+    verbose: bool | None,
+    trust: bool | None,
+    workspace: str | None,
+    worktree: str | None,
+    raw: bool,
+    no_partial: bool,
+    force: bool | None,
+    mode: str | None,
+) -> None:
     """Run the agent with full tool access, including file writes."""
     cfg = ctx.obj["cfg"]
     _run_agent(
@@ -146,7 +170,7 @@ def run(ctx, prompt: str, model, verbose, trust, workspace, worktree, raw, no_pa
 
 @main.command()
 @click.pass_context
-def models(ctx):
+def models(ctx: click.Context) -> None:
     """List models available for this account."""
     cmd = runner.find_agent() + ["--list-models"]
     try:
@@ -184,7 +208,7 @@ def models(ctx):
 
 @main.command()
 @click.pass_context
-def status(ctx):
+def status(ctx: click.Context) -> None:
     """Show authentication and account status."""
     cmd = runner.find_agent() + ["status"]
     try:
@@ -197,13 +221,13 @@ def status(ctx):
 
 
 @main.group()
-def config():
+def config() -> None:
     """Manage configuration."""
 
 
 @config.command("show")
 @click.pass_context
-def config_show(ctx):
+def config_show(ctx: click.Context) -> None:
     """Show current effective configuration."""
     cfg = ctx.obj["cfg"]
     table = Table(title="Effective Config", show_header=True, header_style="bold")
@@ -216,7 +240,7 @@ def config_show(ctx):
 
 
 @config.command("init")
-def config_init():
+def config_init() -> None:
     """Write a default config file if none exists."""
     if cfg_module.CONFIG_PATH.exists():
         console.print(f"[yellow]Config already exists:[/yellow] {cfg_module.CONFIG_PATH}")
@@ -230,7 +254,7 @@ def config_init():
 
 def _run_agent(
     prompt: str,
-    cfg: dict,
+    cfg: dict[str, Any],
     model: str | None,
     verbose: bool | None,
     trust: bool | None,
@@ -267,7 +291,7 @@ def _run_agent(
         verbose=resolved_verbose,
         model_hint=resolved_model,
     )
-    stderr = proc.stderr.read()
+    stderr = proc.stderr.read() if proc.stderr is not None else ""
     proc.wait()
 
     if stderr.strip():

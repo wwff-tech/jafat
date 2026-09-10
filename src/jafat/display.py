@@ -1,6 +1,8 @@
 """Rich rendering for cursor agent stream events."""
 
 import logging
+from collections.abc import Iterable
+from typing import Any
 
 from rich.console import Console
 from rich.live import Live
@@ -13,7 +15,7 @@ console = Console()
 err_console = Console(stderr=True)
 
 
-def _tool_markup(event: dict) -> str | None:
+def _tool_markup(event: dict[str, Any]) -> str | None:
     """Return Rich markup for a tool_call event, or None to suppress."""
     subtype = event.get("subtype", "")
     tc = event.get("tool_call", {})
@@ -43,7 +45,7 @@ def _tool_markup(event: dict) -> str | None:
     return None
 
 
-def render_stream(events, verbose: bool, model_hint: str = "") -> int:
+def render_stream(events: Iterable[dict[str, Any]], verbose: bool, model_hint: str = "") -> int:
     """
     Consume NDJSON events from cursor agent, render with Rich.
     Returns 0 on success, 1 on agent-reported error.
